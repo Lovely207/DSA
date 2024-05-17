@@ -1,0 +1,80 @@
+
+You are given two 0-indexed integer arrays nums and removeQueries, both of length n. For the ith query, the element in nums at the index removeQueries[i] is removed, splitting nums into different segments.
+
+A segment is a contiguous sequence of positive integers in nums. A segment sum is the sum of every element in a segment.
+
+Return an integer array answer, of length n, where answer[i] is the maximum segment sum after applying the ith removal.
+
+Note: The same index will not be removed more than once.
+
+
+
+
+struct st{
+    long long tot;
+    long long max_prefix;
+    long long max_suffix;
+    long long max_sum;
+};
+
+
+
+class Solution {
+public:
+
+    const long long inf = 8e13;
+
+    st combine(st left,st right)
+    {
+        st temp;
+        temp.tot=left.tot+right.tot;
+        temp.max_prefix=max(left.max_prefix,left.tot+right.max_prefix);
+        temp.max_suffix=max(right.max_suffix,right.tot+left.max_suffix);
+        temp.max_sum=max({left.max_sum,right.max_sum,left.max_suffix+right.max_prefix});
+        return temp;
+    }
+
+    void build(int id,int l,int r,vector<int> &nums,vector<st> &seg)
+    {
+        if(l==r){
+            seg[id].tot=(long long)nums[l];
+            seg[id].max_prefix=(long long)nums[l];
+            seg[id].max_suffix=(long long)nums[l];
+            seg[id].max_sum=(long long)nums[l];
+            return;
+        }
+        int mid=(l+r)/2;
+        build(2*id,l,mid,nums,seg);
+        build(2*id+1,mid+1,r,nums,seg);
+        seg[id]=combine(seg[2*id],seg[2*id+1]);
+    }
+
+    void update(int pos,int id,int l,int r,vector<st> &seg)
+    {
+        if(l==r){
+            seg[id].tot=-inf;
+            seg[id].max_prefix=-inf;
+            seg[id].max_suffix=-inf;
+            seg[id].max_sum=-inf;
+            return;
+        }
+        int mid=(l+r)>>1;
+        if(pos<=mid)update(pos,2*id,l,mid,seg);
+        else update(pos,2*id+1,mid+1,r,seg);
+        seg[id]=combine(seg[2*id],seg[2*id+1]);
+    }
+
+    vector<long long> maximumSegmentSum(vector<int>& nums, vector<int>& removeQueries) {
+        int n=nums.size();
+        vector<st>seg(4*n+1);
+        build(1,0,n-1,nums,seg);
+        vector<long long>ans(n);
+        cout<<seg[1].max_sum;
+        for(int i=0;i<n;i++){
+            int pos=removeQueries[i];
+            update(pos,1,0,n-1,seg);
+            ans[i]=max((long long)0,seg[1].max_sum);
+        }
+        return ans;
+    }
+};
